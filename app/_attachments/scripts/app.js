@@ -13,7 +13,31 @@ angular.module('moviesApp', ['ngRoute'])
           });
 })
 
-.controller('homeCtrl', function($scope, acteurSrv, putDocSrv, getDocSrv) {
+.controller('homeCtrl', function($scope, acteurSrv, putDocSrv, getDocSrv, viewSrv) {
+	
+	$('#searchView').on('click', function(e) {
+		var param = $('#viewSearch').val();
+		var viewString = '_view/byName?key=' + param;
+		
+		viewSrv.getView(viewString).then(function(data) {
+			var arr = JSON.parse(data).rows;
+			var htmlString;
+			for (var i = 0; i < arr.length; i++) {
+				if(arr[i].value.type === "acteur") { 
+					var titles = [];
+					for(var j=0;j<response.rows[i].doc.movies.length;j++){
+		            	   titles.push(response.rows[i].doc.movies[j].title);
+		                } 
+					for (var i = 0; i < titles.length; i++) {
+						htmlString += titles[i];
+					}
+					$("#output").html(htmlString);
+				}
+			}
+		}, function (data) {
+			
+		});
+	})
 	
 	$('#searchButton').on('click', function(e) {
 		
@@ -71,6 +95,22 @@ angular.module('moviesApp', ['ngRoute'])
         getDoc: function(){
             var q = $q.defer();
             $http.get('../../_all_docs?include_docs=true')
+                .success(function(data, status, headers, config) {
+					q.resolve(data);
+				})
+                .error(function (data, status, headers, config) {
+                    q.reject("Doc kon niet worden opgevraagd: Status: " + status);
+                 });
+            return q.promise;
+        }
+    }
+}])
+
+.factory('viewSrv',['$http','$q',function($http,$q){
+    return {
+        getView: function(view){
+            var q = $q.defer();
+            $http.get(view)
                 .success(function(data, status, headers, config) {
 					q.resolve(data);
 				})
