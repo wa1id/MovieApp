@@ -13,8 +13,32 @@ angular.module('moviesApp', ['ngRoute'])
           });
 })
 
-.controller('homeCtrl', function($scope) {
+.controller('homeCtrl', function($scope, acteurSrv) {
 	
-	
-	
+	$('#searchButton').on('click', function(e) {
+		
+		var acteur = $('#acteurText').val();
+		
+		acteurSrv.getActeur(acteur).then(function(data) {
+			console.log(data);
+			
+		});
+	});
+})
+
+.service('acteurSrv', function($http, $q) {
+	this.getActeur = function(acteur) {
+		
+		var q = $q.defer();
+		var url = 'http://theimdbapi.org/api/find/person?name=' + encodeURIComponent(acteur);
+		
+		$http.get(url)
+			.then(function(data) {
+				q.resolve(data);
+			}, function error(err) {
+				q.reject(err);
+			});
+		
+		return q.promise;
+	}
 })
