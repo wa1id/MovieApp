@@ -13,7 +13,7 @@ angular.module('moviesApp', ['ngRoute'])
           });
 })
 
-.controller('homeCtrl', function($scope, acteurSrv, putDocSrv) {
+.controller('homeCtrl', function($scope, acteurSrv, putDocSrv, getDocSrv) {
 	
 	$('#searchButton').on('click', function(e) {
 		
@@ -25,9 +25,22 @@ angular.module('moviesApp', ['ngRoute'])
 			var movies = data.data[0].filmography.actor;
 			doc.acteur = acteur;
 			doc.movies = movies;
+			doc.type = "acteur";
 
 			putDocSrv.putDoc(acteur,doc).then(function(response){
-	            
+				getDocSrv.getDoc().then(function(response){
+			        var titles = [];
+			        for(var i=0;i<response.rows.length;i++){
+			           if(response.rows[i].id != "_design/views" && response.rows[i].doc.type == "acteur"){
+			               for(var j=0;j<response.rows[i].doc.movies.length;j++){
+			            	   titles.push(response.rows[i].doc.movies[j].title);
+			                } 
+			           }
+			        }
+			        $scope.allMovies = titles;
+			    },function(response){
+			        
+			    });
 	        },function(response){
 	            
 	        })
@@ -52,6 +65,22 @@ angular.module('moviesApp', ['ngRoute'])
 		return q.promise;
 	}
 })
+
+.factory('getDocSrv',['$http','$q',function($http,$q){
+    return {
+        getDoc: function(){
+            var q = $q.defer();
+            $http.get('../../_all_docs?include_docs=true')
+                .success(function(data, status, headers, config) {
+					q.resolve(data);
+				})
+                .error(function (data, status, headers, config) {
+                    q.reject("Doc kon niet worden opgevraagd: Status: " + status);
+                 });
+            return q.promise;
+        }
+    }
+}])
 
 .factory('putDocSrv',['$http','$q',function($http,$q){
     return {
